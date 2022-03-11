@@ -1,7 +1,7 @@
 /// <reference types="Cypress" />
 
 describe('Central de Atendimento ao CLiente TAT', function() {
-    this.beforeEach(function() {
+    beforeEach(function() {
         cy.visit('./src/index.html');
     });
 
@@ -12,6 +12,8 @@ describe('Central de Atendimento ao CLiente TAT', function() {
     it('preencha os campos obrigatórios e envia o formulário', function() {
         const longText = "Teste, Teste, Teste, Teste, Teste, Teste, Teste, Teste, Teste, Teste";
         
+        cy.clock();
+
         cy.get('#firstName').type('Leonardo');
         cy.get('#lastName').type('Moreira');
         cy.get('#email').type('leoguedesm1@gmail.com');
@@ -19,11 +21,15 @@ describe('Central de Atendimento ao CLiente TAT', function() {
         cy.contains('button', 'Enviar').click();
 
         cy.get('.success').should('be.visible');
+        cy.tick(3000);
+        cy.get('.success').should('not.be.visible');
     });
 
     it('exibe mensagem de erro ao submeter o formulário com um email com formatação inválida', function() {
         const longText = "Teste, Teste, Teste, Teste, Teste, Teste, Teste, Teste, Teste, Teste";
         
+        cy.clock();
+
         cy.get('#firstName').type('Leonardo');
         cy.get('#lastName').type('Moreira');
         cy.get('#email').type('leoguedesm1gmail.com');
@@ -31,6 +37,8 @@ describe('Central de Atendimento ao CLiente TAT', function() {
         cy.contains('button', 'Enviar').click();
 
         cy.get('.error').should('be.visible');
+        cy.tick(3000);
+        cy.get('.error').should('not.be.visible');
     });
 
     it('campo de telefone continua vazio quando preenchido com valor não numérico', function() {
@@ -80,15 +88,20 @@ describe('Central de Atendimento ao CLiente TAT', function() {
     });
 
     it('exibe mensagem de erro ao submeter o formulário sem preencher os campos obrigatórios', function() {
+        cy.clock();
         cy.contains('button', 'Enviar').click();
 
         cy.get('.error').should('be.visible');
+        cy.tick(3000);
+        cy.get('.error').should('not.be.visible');
     });
 
     it('envia o formulario com sucesso usando um comando customizado', function() {
+        cy.clock();
         cy.fillMandatoryFieldsAndSubmit();
-
         cy.get('.success').should('be.visible');
+        cy.tick(3000);
+        cy.get('.success').should('not.be.visible');
     });
 
     it('seleciona um produto (YouTube) por seu text', function() {
@@ -173,5 +186,45 @@ describe('Central de Atendimento ao CLiente TAT', function() {
         cy.contains('Talking About Testing').should('be.visible');
     });
 
-    
+    it('exibe e esconde as mensages de sucesso e erro usando o .invoke', function() {
+        cy.get('.success')
+            .should('not.be.visible')
+            .invoke('show')
+            .should('be.visible')
+            .and('contain', 'Mensagem enviada com sucesso.')
+            .invoke('hide')
+            .should('not.be.visible')
+        
+        cy.get('.error')
+            .should('not.be.visible')
+            .invoke('show')
+            .should('be.visible')
+            .and('contain', 'Valide os campos obrigatórios!')
+            .invoke('hide')
+            .should('not.be.visible')
+    });
+
+    it('preenche a area de texto usando comando invoke', function() {
+        const longText = Cypress._.repeat('0123456789', 20);
+        
+        cy.get('#open-text-area')
+            .invoke('val', longText)
+            .should('have.value', longText)
+    });
+
+    it('faz uma requisicao HTTP', function() {
+        cy.request('https://cac-tat.s3.eu-central-1.amazonaws.com/index.html')
+            .should(function(response) {
+                const { status, statusText, body } = response;
+                expect(status).to.equal(200);
+                expect(statusText).to.equal('OK');
+                expect(body).contains('CAC TAT')
+            })
+    });
+
+    it.only('encontra o gato escondido', function() {
+        cy.get('#cat')
+            .invoke('show')
+            .should('be.visible')
+    })
 });
